@@ -170,6 +170,12 @@ const Reception = {
                 />
                 <item-detail-card
                     :record="line_being_handled"
+                    :options="{key_title: 'package_dest.storage_type.name'}"
+                    :card_color="utils.colors.color_for('screen_step_todo')"
+                    :key="make_state_component_key(['reception-product-item-detail-set-destination-pack-type', state.data.picking.id])"
+                />
+                <item-detail-card
+                    :record="line_being_handled"
                     :card_color="utils.colors.color_for('screen_step_todo')"
                     :options="{key_title: 'location_dest.name'}"
                     :key="make_state_component_key(['reception-product-item-detail-set-destination-dest-location', state.data.picking.id])"
