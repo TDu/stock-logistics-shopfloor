@@ -1258,8 +1258,15 @@ class Reception(Component):
         self._prefill_package_type(selected_line, package)
         return self._response_for_set_destination(picking, selected_line)
 
+    def _control_package_dimension(self, line, package):
+        # Find the height from the packaging
+        packaging = line.product_id._find_best_packaging(line.qty_picked)
+        height = packaging.height or 0
+        # TODO how to control it ?
+
     def _prefill_package_type(self, line, package):
         """Prefill the package type on the package before the move is done."""
+        self._control_package_dimension(line, package)
         package._assign_packaging(line.product_id, line.qty_picked)
         if not package.location_id:
             if hasattr(line, "_recompute_putaways"):
