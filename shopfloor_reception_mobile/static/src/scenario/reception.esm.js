@@ -170,7 +170,7 @@ const Reception = {
                 />
                 <item-detail-card
                     :record="line_being_handled"
-                    :options="{key_title: 'package_dest.storage_type.name'}"
+                    :options="storage_type_options(line_being_handled)"
                     :card_color="utils.colors.color_for('screen_step_todo')"
                     :key="make_state_component_key(['reception-product-item-detail-set-destination-pack-type', state.data.picking.id])"
                 />
@@ -420,6 +420,21 @@ const Reception = {
                 ],
             };
         },
+
+
+        storage_type_select: function () {
+            alert("What's up ?");
+        },
+        storage_type_options: function (line) {
+            return  {
+                key_title: "package_dest.storage_type.name",
+                title_default: "?",
+                title_action_icon: "mdi-help-circle",
+                on_title_action: this.storage_type_select,
+            };
+        },
+
+
         select_dest_package_display_name_values: function (rec) {
             var values = [];
             if (rec.origin) {
