@@ -2,30 +2,70 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl)
 
 
+from odoo.addons.base_rest.components.service import to_int
 from odoo.addons.component.core import Component
 
 
 class Reception(Component):
     _inherit = "shopfloor.reception"
 
-    # # TODO could also be done in _put_in_pack with a context key
-    # def process_with_new_pack(self, picking_id, selected_line_id, quantity):
-    #     res = super().process_with_new_pack(picking_id, selected_line_id, quantity)
-    #     if res.get("next_state", "") == "set_destination":
-    #         line = self.env["stock.move.line"].browse(selected_line_id)
-    #         package = line.result_package_id
-    #         if package:
-    #             # Should this be done before generating the response ?
-    #             packaging = package._search_product_packaging(line.product_id, line.qty_picked)
-    #             package.product_packaging_id = packaging
-    #     return res
+    def set_storage_type(self, picking_id, selected_line_id, barcode=""):
+        """ """
+        picking = self.env["stock.picking"].browse(picking_id)
+        selected_line = self.env["stock.move.line"].browse(selected_line_id)
+        # if storage_type:=self.env["stock.package.type"].browse(barcode):
+        __import__("pdb").set_trace()
+        if barcode:
+            storage_type = self.env["stock.package.type"].browse(barcode)
+            if  storage_type:
+                selected_line.result_package_id.package_type_id = storage_type
 
-    # def _set_package_on_move_line(self, picking, line, package):
-    #     res = super()._set_package_on_move_line( picking, line, package)
-    #     if res is None and line.result_package_id:
-    #         packaging = package._search_product_packaging(line.product_id, line.qty_picked)
-    #         package.product_packaging_id = packaging
-    #     return res
+        # message = self._check_picking_processible(picking)
+        # if message:
+        #     return self._response_for_select_dest_package(
+        #         picking, selected_line, message=message
+        #     )
+        # if not selected_line.exists():
+        #     message = self.msg_store.record_not_found()
+        #     return self._response_for_select_dest_package(
+        #         picking, selected_line, message=message
+        #     )
+        return self._response_for_set_storage_type(picking, selected_line)
 
-    # def _package_assign_product_packaging(self, product_id, quantity):
-    #     ...
+    def _get_storage_type(self, line):
+        domain = [("package_carrier_type", "=", "none")]
+        return self.env["stock.package.type"].search(domain)
+
+    def _response_for_set_storage_type(self, picking, line, message=None):
+        storage_types = self._get_storage_type(line)
+        data = {
+            "selected_move_line": self._data_for_move_lines(line),
+            "picking": self._data_for_stock_picking(picking, with_lines=False),
+            "storage_types": self._data_for_storage_types(storage_types),
+        }
+        return self._response(
+            next_state="set_storage_type", data=data, message=message
+        )
+
+    def _data_for_storage_type(self, storage_type):
+        return self.data.delivery_packaging(storage_type)
+
+    def _data_for_storage_types(self, storage_types):
+        return [
+            self._data_for_storage_type(storage_type)
+            for storage_type in storage_types
+        ]
+
+class ShopfloorReceptionValidator(Component):
+    _inherit = "shopfloor.reception.validator"
+
+    def set_storage_type(self):
+        return {
+            "picking_id": {"coerce": to_int, "required": True, "type": "integer"},
+            "selected_line_id": {
+                "coerce": to_int,
+                "type": "integer",
+                "required": True,
+            },
+            "barcode": {"coerce": to_int, "type": "integer", "required": False},
+        }

@@ -11,6 +11,8 @@
     "author": "Camptocamp, Odoo Community Association (OCA)",
     "license": "AGPL-3",
     "application": False,
-    "depends": ["shopfloor_reception", "stock_quant_package_package_type"],
+    "depends": ["shopfloor_reception" ],
     "auto_install": True,
 }
+
+# TODO do we really need a new module for this feature ?

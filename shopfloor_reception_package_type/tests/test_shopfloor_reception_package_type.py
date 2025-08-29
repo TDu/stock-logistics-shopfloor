@@ -33,12 +33,9 @@ class TestShopfloorReceptionProductPackaging(CommonCase):
         cls.package_type = cls.env.ref("stock.package_type_01")
         product_a_packaging = cls.product_a.packaging_ids
         product_a_packaging.package_type_id = cls.package_type
-        # __import__("pdb").set_trace()
+        cls.storage_types = cls.env["stock.package.type"].search([("package_carrier_type", "=", "none")])
 
-    def test_one(self):
-        self.assertTrue(True)
-
-    def test_process_with_new_pack__package_type_is_set(self):
+    def test_go_to_set_storage_type_screen(self):
         picking = self.picking
         self.service.dispatch("scan_document", params={"barcode": picking.name})
         selected_move_line = picking.move_line_ids.filtered(
@@ -46,69 +43,45 @@ class TestShopfloorReceptionProductPackaging(CommonCase):
         )
         self.assertEqual(len(selected_move_line), 1)
         response = self.service.dispatch(
-            "process_with_new_pack",
+            "set_storage_type",
             params={
                 "picking_id": picking.id,
                 "selected_line_id": selected_move_line.id,
-                "quantity": 3.0,
             },
         )
-        picking_data = self.data.picking(picking)
+        # FIXME
+        response["data"]["set_storage_type"]["picking"].pop("progress")
+        self.assert_response(
+            response,
+            next_state="set_storage_type",
+            data={
+                "picking": self.data.picking(picking),
+                "selected_move_line": self.data.move_lines(selected_move_line),
+                "storage_types": [ self.data.delivery_packaging(pack) for pack in self.storage_types],
+            },
+        )
+
+    def test_change_storage_type_on_package(self):
+        picking = self.picking
+        self.service.dispatch("scan_document", params={"barcode": picking.name})
+        selected_move_line = picking.move_line_ids.filtered(
+            lambda li: li.product_id == self.product_a
+        )
+        self.assertEqual(len(selected_move_line), 1)
+        response = self.service.dispatch(
+            "set_storage_type",
+            params={
+                "picking_id": picking.id,
+                "selected_line_id": selected_move_line.id,
+                "storage_type_id": self.package_type.id,
+            },
+        )
+        # response["data"]["set_storage_type"]["picking"].pop("progress")
         self.assert_response(
             response,
             next_state="set_destination",
             data={
-                "picking": picking_data,
+                "picking": self.data.picking(picking),
                 "selected_move_line": self.data.move_lines(selected_move_line),
             },
         )
-        package = selected_move_line.result_package_id
-        self.assertTrue(package.product_packaging_id)
-        self.assertTrue(response["data"]["set_destination"]["selected_move_line"]["package_dest"].get("package_type"))
-
-    # def test_process_with_new_pack__package_type_not_set(self):
-    #     picking = self.picking
-    #     self.service.dispatch("scan_document", params={"barcode": picking.name})
-    #     selected_move_line = picking.move_line_ids.filtered(
-    #         lambda li: li.product_id == self.product_a
-    #     )
-    #     self.assertEqual(len(selected_move_line), 1)
-    #     response = self.service.dispatch(
-    #         "process_with_new_pack",
-    #         params={
-    #             "picking_id": picking.id,
-    #             "selected_line_id": selected_move_line.id,
-    #             "quantity": 5.0,
-    #         },
-    #     )
-    #     picking_data = self.data.picking(picking)
-    #     self.assert_response(
-    #         response,
-    #         next_state="set_destination",
-    #         data={
-    #             "picking": picking_data,
-    #             "selected_move_line": self.data.move_lines(selected_move_line),
-    #         },
-    #     )
-    #     package = selected_move_line.result_package_id
-    #     self.assertFalse(package.product_packaging_id)
-
-    # def test_scan_new_package__package_type_set(self):
-    #     picking = self.picking
-    #     selected_move_line = picking.move_line_ids.filtered(
-    #         lambda li: li.product_id == self.product_a
-    #     )
-    #     selected_move_line.qty_picked = 3
-    #     response = self.service.dispatch(
-    #         "select_dest_package",
-    #         params={
-    #             "picking_id": picking.id,
-    #             "selected_line_id": selected_move_line.id,
-    #             "barcode": "FooBar",
-    #             "confirmation": True,
-    #         },
-    #     )
-    #     self.assertEqual(response.get("next_state"), "select_move")
-    #     package = selected_move_line.result_package_id
-    #     self.assertEqual(package.name, "FooBar")
-    #     self.assertTrue(package.product_packaging_id)
