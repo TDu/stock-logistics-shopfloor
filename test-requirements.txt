@@ -1,1 +1,3 @@
 odoo_test_helper
+odoo-addon-stock_quant_package_product_packaging @ git+https://github.com/OCA/stock-logistics-tracking.git@refs/pull/49/head#subdirectory=stock_quant_package_product_packaging
+odoo-addon-stock_storage_type @ git+https://github.com/OCA/stock-logistics-putaway.git@refs/pull/11/head#subdirectory=stock_storage_type
