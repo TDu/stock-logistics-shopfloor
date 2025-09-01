@@ -13,27 +13,28 @@ class Reception(Component):
         """ """
         picking = self.env["stock.picking"].browse(picking_id)
         selected_line = self.env["stock.move.line"].browse(selected_line_id)
-        # if storage_type:=self.env["stock.package.type"].browse(barcode):
-        __import__("pdb").set_trace()
+        message = self._check_picking_processible(picking)
+        if message:
+            return self._response_for_select_dest_package(
+                picking, selected_line, message=message
+            )
+        if not selected_line.exists():
+            message = self.msg_store.record_not_found()
+            return self._response_for_select_dest_package(
+                picking, selected_line, message=message
+            )
         if barcode:
-            storage_type = self.env["stock.package.type"].browse(barcode)
-            if  storage_type:
+            storage_type = self.env["stock.package.type"].search([("barcode", "=", barcode)])
+            if not storage_type.exists():
+                message = self.msg_store.package_type_not_found()
+            else:
                 selected_line.result_package_id.package_type_id = storage_type
-
-        # message = self._check_picking_processible(picking)
-        # if message:
-        #     return self._response_for_select_dest_package(
-        #         picking, selected_line, message=message
-        #     )
-        # if not selected_line.exists():
-        #     message = self.msg_store.record_not_found()
-        #     return self._response_for_select_dest_package(
-        #         picking, selected_line, message=message
-        #     )
-        return self._response_for_set_storage_type(picking, selected_line)
+                message = self.msg_store.package_type_changed()
+                return self._response_for_set_destination(picking, selected_line, message=message)
+        return self._response_for_set_storage_type(picking, selected_line, message=message)
 
     def _get_storage_type(self, line):
-        domain = [("package_carrier_type", "=", "none")]
+        domain = [("package_carrier_type", "=", "none"), ("barcode", "!=", False)]
         return self.env["stock.package.type"].search(domain)
 
     def _response_for_set_storage_type(self, picking, line, message=None):
@@ -67,5 +68,5 @@ class ShopfloorReceptionValidator(Component):
                 "type": "integer",
                 "required": True,
             },
-            "barcode": {"coerce": to_int, "type": "integer", "required": False},
+            "barcode": {"type": "string", "required": False},
         }

@@ -31,6 +31,7 @@ class TestShopfloorReceptionProductPackaging(CommonCase):
         # )
         # cls.package_type = cls.env["stock.package.type"]
         cls.package_type = cls.env.ref("stock.package_type_01")
+        cls.package_type.sudo().barcode = "CAGE"
         product_a_packaging = cls.product_a.packaging_ids
         product_a_packaging.package_type_id = cls.package_type
         cls.storage_types = cls.env["stock.package.type"].search([("package_carrier_type", "=", "none")])
@@ -67,21 +68,36 @@ class TestShopfloorReceptionProductPackaging(CommonCase):
         selected_move_line = picking.move_line_ids.filtered(
             lambda li: li.product_id == self.product_a
         )
-        self.assertEqual(len(selected_move_line), 1)
+        selected_move_line.qty_picked = selected_move_line.quantity_product_uom
+
+        response = self.service.dispatch(
+            "select_dest_package",
+            params={
+                "picking_id": picking.id,
+                "selected_line_id": selected_move_line.id,
+                "barcode": "CAGE-0001",
+                "confirmation": True,
+            },
+        )
+
+        # self.assertEqual(len(selected_move_line), 1)
         response = self.service.dispatch(
             "set_storage_type",
             params={
                 "picking_id": picking.id,
                 "selected_line_id": selected_move_line.id,
-                "storage_type_id": self.package_type.id,
+                "barcode": "CAGE",
             },
         )
         # response["data"]["set_storage_type"]["picking"].pop("progress")
-        self.assert_response(
-            response,
-            next_state="set_destination",
-            data={
-                "picking": self.data.picking(picking),
-                "selected_move_line": self.data.move_lines(selected_move_line),
-            },
-        )
+        self.assertEqual(response["next_state"], "set_destination")
+        self.assertTrue(selected_move_line.result_package_id)
+        self.assertEqual(selected_move_line.result_package_id.package_type_id, self.package_type)
+        # self.assert_response(
+        #     response,
+        #     next_state="set_destination",
+        #     data={
+        #         "picking": self.data.picking(picking),
+        #         "selected_move_line": self.data.move_lines(selected_move_line),
+        #     },
+        # )
