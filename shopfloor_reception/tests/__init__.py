@@ -1,4 +1,5 @@
 from . import test_assign_package_type
+from . import test_change_storage_type
 from . import test_start
 from . import test_select_document
 from . import test_manual_selection
