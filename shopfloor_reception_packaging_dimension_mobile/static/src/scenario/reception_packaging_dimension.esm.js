@@ -82,7 +82,23 @@ const new_template =
     </v-card>
 
     <div class="button-list button-vertical-list full">
-        <v-row align="center">
+        <!-- measuring-device-placeholder -->
+        <v-row v-if="state.data.packaging.is_being_measured == false" align="center">
+            <v-col class="text-center" cols="12">
+                <btn-action @click="state.use_measuring_device">Use Measuring Device</btn-action>
+            </v-col>
+        </v-row>
+        <v-row v-if="state.data.packaging.is_being_measured == true" align="center">
+            <v-col class="text-center" cols="12">
+                <btn-action @click="state.release_measuring_device">Release Measuring Device</btn-action>
+            </v-col>
+        </v-row>
+        <v-row v-if="state.data.packaging.is_being_measured == true" align="center">
+            <v-col class="text-center" cols="12">
+                <btn-action @click="state.refresh_screen">Refresh</btn-action>
+            </v-col>
+        </v-row>
+        <v-row v-if="state.data.packaging.is_being_measured == false" align="center">
             <v-col class="text-center" cols="12">
                 <btn-action @click="state.on_done">Done</btn-action>
             </v-col>
