@@ -82,6 +82,7 @@ const new_template =
     </v-card>
 
     <div class="button-list button-vertical-list full">
+        <!-- measuring-device-placeholder -->
         <v-row v-if="state.data.packaging.is_being_measured == false" align="center">
             <v-col class="text-center" cols="12">
                 <btn-action @click="state.use_measuring_device">Use Measuring Device</btn-action>
