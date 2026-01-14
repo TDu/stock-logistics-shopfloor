@@ -19,16 +19,21 @@ class Reception(Component):
         packaging = self.env["product.packaging"].sudo().browse(packaging_id)
         device_domain = self._get_measuring_device_domain()
         device = self.env["measuring.device"].search(device_domain)
+        msg = ""
         if not packaging:
             msg = self.msg_store.record_not_found()
         elif not device:
             msg = self.msg_store.no_measuring_device_found()
         elif device._is_being_used():
             msg = self.msg_store.measuring_device_already_in_use(device)
-        else:
-            packaging._measuring_device_assign(device)
-            msg = self.msg_store.measuring_device_selected(device, packaging)
-        return self._response_for_set_packaging_dimension(
+        if msg:
+            return self._response_for_set_packaging_dimension(
+                picking, selected_line, packaging, message=msg
+            )
+        # else:
+        packaging._measuring_device_assign(device)
+        msg = self.msg_store.measuring_device_selected(device, packaging)
+        return self._response_for_use_measuring_device(
             picking, selected_line, packaging, message=msg
         )
 
@@ -56,6 +61,21 @@ class Reception(Component):
         return dict(
             super()._set_packaging_dimension_data_for_packaging(packaging),
             is_being_measured=bool(packaging.measuring_device_id),
+        )
+
+    def _response_for_use_measuring_device(
+        self, picking, line, packaging, message=None
+    ):
+        return self._response(
+            next_state="use_measuring_device",
+            data={
+                "picking": self.data.picking(picking),
+                "selected_move_line": self.data.move_line(line),
+                "packaging": self._set_packaging_dimension_data_for_packaging(
+                    packaging
+                ),
+            },
+            message=message,
         )
 
 
@@ -88,10 +108,15 @@ class ShopfloorReceptionValidator(Component):
 class ShopfloorReceptionValidatorResponse(Component):
     _inherit = "shopfloor.reception.validator.response"
 
+    def _states(self):
+        res = super()._states()
+        res.update({"use_measuring_device": self._schema_set_packaging_dimension})
+        return res
+
     def _set_packaging_dimension__measuring_device_next_states(self):
         # If the measuring device assign/cancel button is pressed,
         # get back on the same screen.
-        return {"set_packaging_dimension"}
+        return {"set_packaging_dimension", "use_measuring_device"}
 
     def set_packaging_dimension__measuring_device_assign(self):
         return self._response_schema(
@@ -107,3 +132,8 @@ class ShopfloorReceptionValidatorResponse(Component):
         schema = super()._schema_packaging()
         schema["schema"]["is_being_measured"] = {"type": "boolean", "default": False}
         return schema
+
+    def _set_packaging_dimension_next_states(self):
+        res = super()._set_packaging_dimension_next_states()
+        res.update({"use_measuring_device"})
+        return res
