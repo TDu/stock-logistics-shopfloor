@@ -9,7 +9,8 @@ class Reception(Component):
     _inherit = "shopfloor.reception"
 
     def _get_measuring_device_domain(self):
-        return []
+        warehouse = self.work.menu.picking_type_ids.warehouse_id
+        return [("warehouse_id", "in", warehouse.ids)]
 
     def set_packaging_dimension__measuring_device_assign(
         self, picking_id, selected_line_id, packaging_id
@@ -18,7 +19,7 @@ class Reception(Component):
         selected_line = self.env["stock.move.line"].sudo().browse(selected_line_id)
         packaging = self.env["product.packaging"].sudo().browse(packaging_id)
         device_domain = self._get_measuring_device_domain()
-        device = self.env["measuring.device"].search(device_domain)
+        device = self.env["measuring.device"].search(device_domain, limit=1)
         msg = ""
         if not packaging:
             msg = self.msg_store.record_not_found()
