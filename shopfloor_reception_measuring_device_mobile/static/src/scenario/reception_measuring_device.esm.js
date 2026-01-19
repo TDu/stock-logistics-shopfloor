@@ -7,30 +7,36 @@ import {process_registry} from "/shopfloor_mobile_base/static/src/services/proce
 
 const reception_scenario = process_registry.get("reception");
 const _get_states = reception_scenario.component.methods._get_states;
-// // Get the original template of the reception scenario
+// Get the original template of the reception scenario
 const template = reception_scenario.component.template;
-// // And inject the new state template (for this module) into it
-const position_string = "<!-- measuring-device-placeholder -->"
-const pos = template.indexOf(position_string);
-const new_template_prov =
-    template.replace(position_string,
+// Add in template: the button to access the measuring device screen
+const button_placeholder = "<!-- measuring-device-placeholder -->"
+const new_template_temp =
+    template.replace(button_placeholder,
     `
         <v-row>
             <v-col class="text-center" cols="12">
-                <btn-action @click="state.use_measuring_device">BANG - BANG</btn-action>
+                <btn-action @click="state.use_measuring_device">USE MEASURING DEVICE</btn-action>
             </v-col>
         </v-row>
     `
     )
-const pos2= new_template_prov.indexOf("</Screen>");
+// Add in template: the new state
+const pos_new_state= new_template_temp.indexOf("</Screen>");
 const new_template =
-    new_template_prov.substring(0, pos2)
+    new_template_temp.substring(0, pos_new_state)
     +
     `
  <div v-if="state_is('use_measuring_device')">
 
-    <separator-title>Go to the measuring device then confirm with ok.</separator-title>
 
+    <v-card color="" class="detail v-card main mt-5 mb-2">
+        <v-card-title>Go to the measuring device to take the package measurement. Then confirm with OK</v-card-title>
+        <v-card-text class="details pt-0">
+        <p>Any details...</p>
+        </v-card-text>
+
+    </v-card>
      <div class="button-list button-vertical-list full">
          <v-row align="center">
              <v-col class="text-center" cols="12">
@@ -42,18 +48,28 @@ const new_template =
  </div>
 
     ` +
-    new_template_prov.substring(pos2);
+    new_template_temp.substring(pos_new_state);
 
 // // Extend the reception scenario with :
 // //   - the new patched template
 // //   - the js code for the new state
 const ReceptionMeasuringDevice = process_registry.extend("reception", {
     template: new_template,
-//     "methods.get_packaging_measurements": function () {
-//         return ["length", "width", "height", "weight", "qty", "barcode"];
-//     },
     "methods._get_states": function () {
         const states = _get_states.bind(this)();
+        states.set_packaging_dimension.use_measuring_device = () => {
+            const values = {
+                picking_id: this.state.data.picking.id,
+                selected_line_id: this.state.data.selected_move_line.id,
+                packaging_id: this.state.data.packaging.id,
+            };
+            this.wait_call(
+                this.odoo.call(
+                    "set_packaging_dimension__measuring_device_assign",
+                    values
+                )
+            );
+        },
         states.use_measuring_device = {
             display_info: {
                 title: "Using measuring device",
