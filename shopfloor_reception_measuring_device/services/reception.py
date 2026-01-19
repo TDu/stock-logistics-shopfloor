@@ -10,7 +10,10 @@ class Reception(Component):
 
     def _get_measuring_device_domain(self):
         warehouse = self.work.menu.picking_type_ids.warehouse_id
-        return [("warehouse_id", "in", warehouse.ids)]
+        return [
+            ("warehouse_id", "in", warehouse.ids),
+            ("state", "=", "ready"),
+        ]
 
     def set_packaging_dimension__measuring_device_assign(
         self, picking_id, selected_line_id, packaging_id
@@ -31,11 +34,9 @@ class Reception(Component):
             return self._response_for_set_packaging_dimension(
                 picking, selected_line, packaging, message=msg
             )
-        # else:
         packaging._measuring_device_assign(device)
-        msg = self.msg_store.measuring_device_selected(device, packaging)
         return self._response_for_use_measuring_device(
-            picking, selected_line, packaging, message=msg
+            picking, selected_line, packaging
         )
 
     def set_packaging_dimension__measuring_device_release(

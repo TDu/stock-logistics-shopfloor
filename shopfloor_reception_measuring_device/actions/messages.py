@@ -21,19 +21,6 @@ class MessageAction(Component):
             ),
         }
 
-    def measuring_device_selected(self, device, packaging):
-        return {
-            "message_type": "success",
-            "body": self.env._(
-                (
-                    "The device %(name)s has been reserved, "
-                    "you can now measure packaging %(packaging)s"
-                ),
-                name=device.name,
-                packaging=packaging.name,
-            ),
-        }
-
     def no_measuring_device_to_release(self, packaging):
         return {
             "message_type": "warning",

@@ -151,9 +151,6 @@ class TestSetPackDimension(CommonCase):
             response,
             next_state="use_measuring_device",
             data=data,
-            message=self.msg_store.measuring_device_selected(
-                self.device, self.packaging1
-            )
         )
         self.assertEqual(self.packaging1.measuring_device_id, self.device)
         measurements = {
