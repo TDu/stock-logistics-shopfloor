@@ -26,6 +26,38 @@ class TestClusterPickingPrepareUnload(ClusterPickingUnloadPackingCommonCase):
             message=self.service.msg_store.bin_should_be_internal(self.bin2),
         )
 
+    def test_scan_destination_pack_without_quantity(self):
+        """Scan a destination package without an explicit quantity."""
+        move_line = self.move_lines[0]
+        next_line = self.move_lines[1]
+        response = self.service.dispatch(
+            "scan_destination_pack",
+            params={
+                "picking_batch_id": self.batch.id,
+                "move_line_id": move_line.id,
+                "barcode": self.bin1.name,
+                "quantity": None,
+            },
+        )
+        self.assertRecordValues(
+            move_line,
+            [
+                {
+                    "qty_picked": move_line.quantity,
+                    "result_package_id": self.bin1.id,
+                }
+            ],
+        )
+        self.assert_response(
+            response,
+            next_state="start_line",
+            data=self._line_data(next_line),
+            message={
+                "message_type": "success",
+                "body": f"{move_line.qty_picked} {move_line.product_id.display_name} put in {self.bin1.name}",  # noqa
+            },
+        )
+
     def test_prepare_unload_all_same_dest(self):
         move_lines = self.move_lines
         self._set_dest_package_and_done(move_lines[:1], self.bin2)
