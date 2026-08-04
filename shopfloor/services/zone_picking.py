@@ -1269,7 +1269,9 @@ class ZonePicking(Component):
             if extra_message:
                 message["body"] += "\n" + extra_message["body"]
 
-        # Process the next line
+        return self._process_next_line(message=message)
+
+    def _process_next_line(self, message=None):
         response = self.list_move_lines()
         return self._response(base_response=response, message=message)
 
