@@ -2,6 +2,7 @@
     <record id="scenario_single_pack_transfer" model="shopfloor.scenario">
         <field name="name">Single Pack Transfer</field>
         <field name="key">single_pack_transfer</field>
+        <field name="allow_jump_to_menu">True</field>
         <field name="options_edit">
 {
     "allow_create_moves": true,
