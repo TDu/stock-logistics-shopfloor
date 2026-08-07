@@ -39,7 +39,7 @@ class SinglePackTransfer(Component):
             "picking": self.data.picking(move_lines.picking_id),
         }
 
-    def _response_for_start(self, message=None, popup=None, jump_to_menu=False):
+    def _response_for_start(self, message=None, popup=None):
         return self._response(next_state="start", message=message, popup=popup)
 
     def _response_for_confirm_start(self, package_level, message=None, barcode=""):
@@ -267,7 +267,10 @@ class SinglePackTransfer(Component):
         if self._is_last_move(move):
             completion_info = self._actions_for("completion.info")
             completion_info_popup = completion_info.popup(package_level.move_line_ids)
-        return self._response_for_start(message=message, popup=completion_info_popup, jump_to_menu=True)
+        menu_jump = self.work.menu._get_jumpto_menu("jump_to_menu_single_pack_transfer_validate")
+        if menu_jump:
+            return self._response_for_jump_to_menu(menu_jump, message=message)
+        return self._response_for_start(message=message, popup=completion_info_popup)
 
     def _set_destination_and_done(self, package_level, scanned_location):
         stock = self._actions_for("stock")
